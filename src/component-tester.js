@@ -13,14 +13,15 @@ export class ComponentTester {
   unbind: () => void;
   element: Element;
   viewModel: any;
-  configure = aurelia => aurelia.use.standardConfiguration();
+  configureFn = aurelia => aurelia.use.standardConfiguration();
   _html: string;
   _resources: string | string[] = [];
   _bindingContext: any;
   _rootView: View;
 
-  bootstrap(configure: (aurelia: Aurelia) => void) {
-    this.configure = configure;
+  configure(fn: (aurelia: Aurelia) => void): ComponentTester {
+    this.configureFn = fn;
+    return this;
   }
 
   withResources(resources: string | string[]): ComponentTester {
@@ -45,7 +46,7 @@ export class ComponentTester {
 
   create(bootstrap: (configure: ((aurelia: Aurelia) => void)) => Promise<void>): Promise<ComponentTester> {
     return bootstrap(aurelia => {
-      return Promise.resolve(this.configure(aurelia)).then(() => {
+      return Promise.resolve(this.configureFn(aurelia)).then(() => {
         if (this._resources) {
           aurelia.use.globalResources(this._resources);
         }
