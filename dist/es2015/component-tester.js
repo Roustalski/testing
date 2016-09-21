@@ -1,21 +1,22 @@
 import { View } from 'aurelia-templating';
 import { Aurelia } from 'aurelia-framework';
 
-export const StageComponent = {
-  withResources(resources) {
+export let StageComponent = class StageComponent {
+  static withResources(resources) {
     return new ComponentTester().withResources(resources);
   }
-};
+};;
 
 export let ComponentTester = class ComponentTester {
   constructor() {
-    this.configure = aurelia => aurelia.use.standardConfiguration();
+    this.configureFn = aurelia => aurelia.use.standardConfiguration();
 
     this._resources = [];
   }
 
-  bootstrap(configure) {
-    this.configure = configure;
+  configure(fn) {
+    this.configureFn = fn;
+    return this;
   }
 
   withResources(resources) {
@@ -26,6 +27,19 @@ export let ComponentTester = class ComponentTester {
   inView(html) {
     this._html = html;
     return this;
+  }
+
+  beforeEach(done, bootstrap) {
+
+    return new Promise(resolve => {
+      this.manuallyHandleLifecycle().create(bootstrap).then(() => {
+        if (this._bindingContext) {
+          this.bind(this._bindingContext);
+        } else {
+          this.bind();
+        }
+      }).then(() => this.attached()).then(() => resolve(this)).then(done);
+    });
   }
 
   boundTo(bindingContext) {
@@ -40,7 +54,7 @@ export let ComponentTester = class ComponentTester {
 
   create(bootstrap) {
     return bootstrap(aurelia => {
-      return Promise.resolve(this.configure(aurelia)).then(() => {
+      return Promise.resolve(this.configureFn(aurelia)).then(() => {
         if (this._resources) {
           aurelia.use.globalResources(this._resources);
         }
@@ -59,7 +73,7 @@ export let ComponentTester = class ComponentTester {
               this.viewModel = aurelia.root.controllers[0].viewModel;
             }
 
-            return new Promise(resolve => setTimeout(() => resolve(), 0));
+            return new Promise(resolve => setTimeout(() => resolve(this), 0));
           });
         });
       });

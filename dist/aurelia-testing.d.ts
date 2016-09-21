@@ -13,20 +13,23 @@ import {
 import {
   DOM
 } from 'aurelia-pal';
-export declare const StageComponent: any;
+export declare class StageComponent {
+  static withResources(resources: string | string[]): ComponentTester;
+}
 export declare class ComponentTester {
   bind: ((bindingContext?: any) => void);
   attached: (() => void);
   unbind: (() => void);
   element: Element;
   viewModel: any;
-  configure: any;
-  bootstrap(configure: ((aurelia: Aurelia) => void)): any;
+  configureFn: any;
+  configure(fn: ((aurelia: Aurelia) => void)): ComponentTester;
   withResources(resources: string | string[]): ComponentTester;
   inView(html: string): ComponentTester;
+  beforeEach(done: (() => void), bootstrap: ((configure: ((aurelia: Aurelia) => void)) => Promise<void>)): Promise<ComponentTester>;
   boundTo(bindingContext: any): ComponentTester;
   manuallyHandleLifecycle(): ComponentTester;
-  create(bootstrap: ((aurelia: Aurelia) => Promise<void>)): Promise<void>;
+  create(bootstrap: ((configure: ((aurelia: Aurelia) => void)) => Promise<void>)): Promise<ComponentTester>;
   dispose(): any;
 }
 

@@ -4,8 +4,8 @@ import {Aurelia} from 'aurelia-framework';
 import {inject} from 'aurelia-dependency-injection';
 import {DOM} from 'aurelia-pal';
 
-export const StageComponent = {
-  withResources(resources): ComponentTester {
+export class StageComponent {
+  static withResources(resources: string | string[]): ComponentTester {
     return new ComponentTester().withResources(resources);
   }
 };
@@ -16,14 +16,15 @@ export class ComponentTester {
   unbind: () => void;
   element: Element;
   viewModel: any;
-  configure = aurelia => aurelia.use.standardConfiguration();
+  configureFn = aurelia => aurelia.use.standardConfiguration();
   _html: string;
   _resources: string | string[] = [];
   _bindingContext: any;
   _rootView: View;
 
-  bootstrap(configure: (aurelia: Aurelia) => void) {
-    this.configure = configure;
+  configure(fn: (aurelia: Aurelia) => void): ComponentTester {
+    this.configureFn = fn;
+    return this;
   }
 
   withResources(resources: string | string[]): ComponentTester {
@@ -36,6 +37,25 @@ export class ComponentTester {
     return this;
   }
 
+  beforeEach( done: () => void, bootstrap: (configure: ((aurelia: Aurelia) => void)) => Promise<void> ): Promise<ComponentTester> {
+
+    return new Promise( resolve => {
+      this.manuallyHandleLifecycle()
+        .create(bootstrap)
+        .then(() => {
+          if ( this._bindingContext ) {
+            this.bind(this._bindingContext);
+          } else {
+            this.bind();
+          }
+        })
+        .then(() => this.attached() )
+        .then(() => resolve(this))
+        .then(done);
+    });
+
+  }
+
   boundTo(bindingContext: any): ComponentTester {
     this._bindingContext = bindingContext;
     return this;
@@ -46,9 +66,9 @@ export class ComponentTester {
     return this;
   }
 
-  create(bootstrap: (aurelia: Aurelia) => Promise<void>): Promise<void> {
+  create(bootstrap: (configure: ((aurelia: Aurelia) => void)) => Promise<void>): Promise<ComponentTester> {
     return bootstrap(aurelia => {
-      return Promise.resolve(this.configure(aurelia)).then(() => {
+      return Promise.resolve(this.configureFn(aurelia)).then(() => {
         if (this._resources) {
           aurelia.use.globalResources(this._resources);
         }
@@ -67,7 +87,7 @@ export class ComponentTester {
               this.viewModel = aurelia.root.controllers[0].viewModel;
             }
 
-            return new Promise(resolve => setTimeout(() => resolve(), 0));
+            return new Promise(resolve => setTimeout(() => resolve(this), 0));
           });
         });
       });

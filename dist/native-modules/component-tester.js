@@ -3,25 +3,32 @@
 import { View } from 'aurelia-templating';
 import { Aurelia } from 'aurelia-framework';
 
-export var StageComponent = {
-  withResources: function withResources(resources) {
-    return new ComponentTester().withResources(resources);
+export var StageComponent = function () {
+  function StageComponent() {
+    
   }
-};
+
+  StageComponent.withResources = function withResources(resources) {
+    return new ComponentTester().withResources(resources);
+  };
+
+  return StageComponent;
+}();;
 
 export var ComponentTester = function () {
   function ComponentTester() {
     
 
-    this.configure = function (aurelia) {
+    this.configureFn = function (aurelia) {
       return aurelia.use.standardConfiguration();
     };
 
     this._resources = [];
   }
 
-  ComponentTester.prototype.bootstrap = function bootstrap(configure) {
-    this.configure = configure;
+  ComponentTester.prototype.configure = function configure(fn) {
+    this.configureFn = fn;
+    return this;
   };
 
   ComponentTester.prototype.withResources = function withResources(resources) {
@@ -32,6 +39,24 @@ export var ComponentTester = function () {
   ComponentTester.prototype.inView = function inView(html) {
     this._html = html;
     return this;
+  };
+
+  ComponentTester.prototype.beforeEach = function beforeEach(done, bootstrap) {
+    var _this = this;
+
+    return new Promise(function (resolve) {
+      _this.manuallyHandleLifecycle().create(bootstrap).then(function () {
+        if (_this._bindingContext) {
+          _this.bind(_this._bindingContext);
+        } else {
+          _this.bind();
+        }
+      }).then(function () {
+        return _this.attached();
+      }).then(function () {
+        return resolve(_this);
+      }).then(done);
+    });
   };
 
   ComponentTester.prototype.boundTo = function boundTo(bindingContext) {
@@ -45,31 +70,31 @@ export var ComponentTester = function () {
   };
 
   ComponentTester.prototype.create = function create(bootstrap) {
-    var _this = this;
+    var _this2 = this;
 
     return bootstrap(function (aurelia) {
-      return Promise.resolve(_this.configure(aurelia)).then(function () {
-        if (_this._resources) {
-          aurelia.use.globalResources(_this._resources);
+      return Promise.resolve(_this2.configureFn(aurelia)).then(function () {
+        if (_this2._resources) {
+          aurelia.use.globalResources(_this2._resources);
         }
 
         return aurelia.start().then(function (a) {
-          _this.host = document.createElement('div');
-          _this.host.innerHTML = _this._html;
+          _this2.host = document.createElement('div');
+          _this2.host.innerHTML = _this2._html;
 
-          document.body.appendChild(_this.host);
+          document.body.appendChild(_this2.host);
 
-          return aurelia.enhance(_this._bindingContext, _this.host).then(function () {
-            _this._rootView = aurelia.root;
-            _this.element = _this.host.firstElementChild;
+          return aurelia.enhance(_this2._bindingContext, _this2.host).then(function () {
+            _this2._rootView = aurelia.root;
+            _this2.element = _this2.host.firstElementChild;
 
             if (aurelia.root.controllers.length) {
-              _this.viewModel = aurelia.root.controllers[0].viewModel;
+              _this2.viewModel = aurelia.root.controllers[0].viewModel;
             }
 
             return new Promise(function (resolve) {
               return setTimeout(function () {
-                return resolve();
+                return resolve(_this2);
               }, 0);
             });
           });
@@ -90,7 +115,7 @@ export var ComponentTester = function () {
   };
 
   ComponentTester.prototype._prepareLifecycle = function _prepareLifecycle() {
-    var _this2 = this;
+    var _this3 = this;
 
     var bindPrototype = View.prototype.bind;
     View.prototype.bind = function () {};
@@ -98,9 +123,9 @@ export var ComponentTester = function () {
       return new Promise(function (resolve) {
         View.prototype.bind = bindPrototype;
         if (bindingContext !== undefined) {
-          _this2._bindingContext = bindingContext;
+          _this3._bindingContext = bindingContext;
         }
-        _this2._rootView.bind(_this2._bindingContext);
+        _this3._rootView.bind(_this3._bindingContext);
         setTimeout(function () {
           return resolve();
         }, 0);
@@ -112,7 +137,7 @@ export var ComponentTester = function () {
     this.attached = function () {
       return new Promise(function (resolve) {
         View.prototype.attached = attachedPrototype;
-        _this2._rootView.attached();
+        _this3._rootView.attached();
         setTimeout(function () {
           return resolve();
         }, 0);
@@ -121,7 +146,7 @@ export var ComponentTester = function () {
 
     this.detached = function () {
       return new Promise(function (resolve) {
-        _this2._rootView.detached();
+        _this3._rootView.detached();
         setTimeout(function () {
           return resolve();
         }, 0);
@@ -130,7 +155,7 @@ export var ComponentTester = function () {
 
     this.unbind = function () {
       return new Promise(function (resolve) {
-        _this2._rootView.unbind();
+        _this3._rootView.unbind();
         setTimeout(function () {
           return resolve();
         }, 0);
