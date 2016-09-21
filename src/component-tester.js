@@ -43,7 +43,7 @@ export class ComponentTester {
     return this;
   }
 
-  create(bootstrap: (aurelia: Aurelia) => Promise<void>): Promise<void> {
+  create(bootstrap: (configure: ((aurelia: Aurelia) => void)) => Promise<void>): Promise<ComponentTester> {
     return bootstrap(aurelia => {
       return Promise.resolve(this.configure(aurelia)).then(() => {
         if (this._resources) {
@@ -64,7 +64,7 @@ export class ComponentTester {
               this.viewModel = aurelia.root.controllers[0].viewModel;
             }
 
-            return new Promise(resolve => setTimeout(() => resolve(), 0));
+            return new Promise(resolve => setTimeout(() => resolve(this), 0));
           });
         });
       });
