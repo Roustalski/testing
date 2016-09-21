@@ -11,7 +11,7 @@ export const StageComponent = {
 };
 
 export class ComponentTester {
-  bind: (bindingContext: any) => void;
+  bind: (bindingContext?: any) => void;
   attached: () => void;
   unbind: () => void;
   element: Element;
