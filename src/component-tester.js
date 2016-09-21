@@ -1,8 +1,8 @@
 import {View} from 'aurelia-templating';
 import {Aurelia} from 'aurelia-framework';
 
-export const StageComponent = {
-  withResources(resources): ComponentTester {
+export class StageComponent {
+  static withResources(resources: string | string[]): ComponentTester {
     return new ComponentTester().withResources(resources);
   }
 };
