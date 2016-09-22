@@ -34,10 +34,9 @@ export let ComponentTester = class ComponentTester {
     return new Promise(resolve => {
       this.manuallyHandleLifecycle().create(bootstrap).then(() => {
         if (this._bindingContext) {
-          this.bind(this._bindingContext);
-        } else {
-          this.bind();
+          return this.bind(this._bindingContext);
         }
+        return this.bind();
       }).then(() => this.attached()).then(() => resolve(this)).then(done);
     });
   }

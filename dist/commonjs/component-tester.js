@@ -57,10 +57,9 @@ var ComponentTester = exports.ComponentTester = function () {
     return new Promise(function (resolve) {
       _this.manuallyHandleLifecycle().create(bootstrap).then(function () {
         if (_this._bindingContext) {
-          _this.bind(_this._bindingContext);
-        } else {
-          _this.bind();
+          return _this.bind(_this._bindingContext);
         }
+        return _this.bind();
       }).then(function () {
         return _this.attached();
       }).then(function () {

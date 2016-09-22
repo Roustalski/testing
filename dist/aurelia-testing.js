@@ -37,19 +37,18 @@ export class ComponentTester {
     return this;
   }
 
-  beforeEach( done: () => void, bootstrap: (configure: ((aurelia: Aurelia) => void)) => Promise<void> ): Promise<ComponentTester> {
+  beforeEach(done: () => void, bootstrap: (configure: ((aurelia: Aurelia) => void)) => Promise<void>): Promise<ComponentTester> {
 
-    return new Promise( resolve => {
+    return new Promise(resolve => {
       this.manuallyHandleLifecycle()
         .create(bootstrap)
         .then(() => {
-          if ( this._bindingContext ) {
-            this.bind(this._bindingContext);
-          } else {
-            this.bind();
+          if (this._bindingContext) {
+            return this.bind(this._bindingContext);
           }
+          return this.bind();
         })
-        .then(() => this.attached() )
+        .then(() => this.attached())
         .then(() => resolve(this))
         .then(done);
     });
@@ -110,7 +109,7 @@ export class ComponentTester {
   _prepareLifecycle() {
     // bind
     const bindPrototype = View.prototype.bind;
-    View.prototype.bind = () => {};
+    View.prototype.bind = () => { };
     this.bind = bindingContext => new Promise(resolve => {
       View.prototype.bind = bindPrototype;
       if (bindingContext !== undefined) {
@@ -122,7 +121,7 @@ export class ComponentTester {
 
     // attached
     const attachedPrototype = View.prototype.attached;
-    View.prototype.attached = () => {};
+    View.prototype.attached = () => { };
     this.attached = () => new Promise(resolve => {
       View.prototype.attached = attachedPrototype;
       this._rootView.attached();
